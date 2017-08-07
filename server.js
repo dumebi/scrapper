@@ -9,7 +9,6 @@ let newLine= "\r\n";
 
 let fields = ['email', 'phone', 'address', 'specialization', 'business'];
 
-let scrapes = [];
 let scrape = {email:"", phone:"", address:"", specialization:"", business:""};
 let count = 0;
 
@@ -161,7 +160,7 @@ function callBack() {
             console.log('File exists');
 
             //write the actual data and end with newline
-            var csv = json2csv(toCsv) + newLine;
+            var csv = newLine + json2csv(toCsv);
 
             fs.appendFile('file.csv', csv, function (err) {
                 if (err) throw err;
