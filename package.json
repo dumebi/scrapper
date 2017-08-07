@@ -5,8 +5,10 @@
   "main": "server.js",
   "author": "Scotch",
   "dependencies": {
+    "bluebird": "^3.5.0",
+    "cheerio": "latest",
     "express": "latest",
-    "request": "latest",
-    "cheerio": "latest"
+    "json2csv": "^3.11.0",
+    "request": "^2.81.0"
   }
 }
