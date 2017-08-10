@@ -3,29 +3,23 @@ let fs = require('fs');
 let request = require('request');
 let cheerio = require('cheerio');
 let app     = express();
-let Promise = require('bluebird');
+let _ = require('lodash');
 let json2csv = require('json2csv');
 let newLine= "\r\n";
 
 let fields = ['email', 'phone', 'address', 'specialization', 'business'];
 
-let scrape = {email:"", phone:"", address:"", specialization:"", business:""};
-let count = 0;
-
-
 function extractEmails (text)
 {
-    //scrape[count].email = text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi);
-    scrape.email = text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi);
+    //scrapes[count].email = text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi);
+    //scrape.email = text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi);
+    //console.log(scrape.email);
     //scrapes[count] = scrape;
     return text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi);
 }
 
 function extractPhones (text)
 {
-    //scrape[count].phone = text.match(/(\d{9,})/gi);
-    scrape.phone = text.match(/(\d{9,})/gi);
-    //scrapes[count] = scrape;
     return text.match(/(\d{9,})/gi);
 }
 
@@ -33,78 +27,55 @@ function extractAddresses (text)
 {
     let res = text.split("<br>");
     let str = "null";
-    Promise.each(res,function(r){
-        if(r.toLowerCase().includes("location") || r.toLowerCase().includes(" state")){
-            str = r.toLowerCase().substring(r.toLowerCase().indexOf("location") - 1);
+
+    for (var i = 0; i < res.length; i++){
+        if(res[i].toLowerCase().includes("location") || res[i].toLowerCase().includes(" state")){
+            str = res[i].toLowerCase().substring(res[i].toLowerCase().indexOf("location") - 1);
             if(str.toLowerCase().includes(" 08") || str.toLowerCase().includes(" mobile")){
                 str = str.toLowerCase().substring(0, str.toLowerCase().indexOf("08") - 1);
                 str = str.toLowerCase().substring(0, str.toLowerCase().indexOf("mobile") - 1);
             }
         }
-        callbackAddress(str);
-    }).then(function(){
-        //scrape[count].address = str;
 
-            //console.log(str);
-
-    });
-}
-
-function callbackAddress(str){
-    scrape.address = str;
-    //scrapes[count] = scrape;
+    }
+    //console.log(str);
+    return str;
 }
 
 function extractSpecialization (text)
 {
     let res = text.split("<br>");
     let str = "null";
-    Promise.each(res,function(r){
-        if(r.toLowerCase().includes(" specialisation") || r.toLowerCase().includes(" specialization")){
-            str = r.toLowerCase().substring(r.toLowerCase().indexOf(" specialisation")) || r.toLowerCase().substring(r.toLowerCase().indexOf(" specialization")) || r.toLowerCase().substring(r.toLowerCase().indexOf(" specialization"));
+    for (var i = 0; i < res.length; i++){
+        if(res[i].toLowerCase().includes(" specialisation") || res[i].toLowerCase().includes(" specialization")){
+            str = res[i].toLowerCase().substring(res[i].toLowerCase().indexOf(" specialisation")) || res[i].toLowerCase().substring(res[i].toLowerCase().indexOf(" specialization")) || res[i].toLowerCase().substring(res[i].toLowerCase().indexOf(" specialization"));
             if(str.toLowerCase().includes(" location")){
                 str = str.toLowerCase().substring(0, str.toLowerCase().indexOf("location") - 1);
                 //str = str.toLowerCase().substring(0, str.toLowerCase().indexOf("mobile") - 1);
             }
         }
-        callbackSpecialization(str);
-    }).then(function(){
-        //scrape[count].specialization = str
-
-        //console.log(str);
-    });
+    }
+    //console.log(str);
+    return str;
 }
 
-function callbackSpecialization(str){
-    scrape.specialization = str;
-    //scrapes[count] = scrape;
-}
+
 
 function extractBusiness (text)
 {
     let res = text.split("<br>");
     let str = "null";
-    Promise.each(res,function(r){
-        console.log(r);
-        if(r.toLowerCase().includes("agrobosco") || r.toLowerCase().includes("centre")){
-             str = r.toLowerCase().substring(r.toLowerCase().indexOf("agrobosco")) || r.toLowerCase().substring(r.toLowerCase().indexOf("centre"));
+    for (var i = 0; i < res.length; i++){
+        if(res[i].toLowerCase().includes("agrobosco") || res[i].toLowerCase().includes("centre")){
+             str = res[i].toLowerCase().substring(res[i].toLowerCase().indexOf("agrobosco")) || res[i].toLowerCase().substring(res[i].toLowerCase().indexOf("centre"));
             if(str.toLowerCase().includes("agrobosco") || str.toLowerCase().includes("centre")){
                 str = str.toLowerCase().substring(0, str.toLowerCase().indexOf("agrobosco") - 1);
                 str = str.toLowerCase().substring(0, str.toLowerCase().indexOf("centre") - 1);
             }
-            console.log(str);
         }
-        callbackBusiness(str);
-    }).then(function(){
-        //scrape[count].business = str;
-
-        //console.log(str);
-    });
-}
-
-function callbackBusiness(str){
-    scrape.business = str;
-    //scrapes[count] = scrape;
+    }
+   // console.log(str);
+    return str;
 }
 
 
@@ -132,24 +103,27 @@ app.get('/scrape', function(req, res){
 });
 
 function process($){
-
+    let count  = 0;
+    let scrapes = {};
     // Finally, we'll define the variables we're going to capture
-
     $('td.l.w.pd').each(function() {
         let message = $('div.narrow', this).html();
 
-        extractEmails(message);
-        extractPhones(message);
-        extractAddresses(message);
-        extractSpecialization(message);
-        extractBusiness(message);
+        let email = extractEmails(message);
+        let phone = extractPhones(message);
+        let address = extractAddresses(message);
+        let spec = extractSpecialization(message);
+        let business = extractBusiness(message);
 
-        count++;
-        callBack()
+        let scrape = {"email":email,"phone":phone,"address":address,"specialization":spec,"business":business};
+
+        console.log("scrape");
+        console.log(scrape);
+        callBack(scrape)
     });
 }
 
-function callBack() {
+function callBack(scrape) {
     let toCsv = {
         data: scrape,
         fields: fields,
@@ -157,19 +131,20 @@ function callBack() {
     };
     fs.stat('file.csv', function (err, stat) {
         if (err == null) {
-            console.log('File exists');
+            //console.log('File exists');
 
             //write the actual data and end with newline
-            var csv = newLine + json2csv(toCsv);
+            let csv = newLine + json2csv(toCsv);
+            //console.log(toCsv);
 
             fs.appendFile('file.csv', csv, function (err) {
                 if (err) throw err;
-                console.log('The "data to append" was appended to file!');
+                //console.log('The "data to append" was appended to file!');
             });
         }
         else {
             //write the headers and newline
-            console.log('New file, just writing headers');
+            //console.log('New file, just writing headers');
             fields = (fields + newLine);
 
             fs.writeFile('file.csv', fields, function (err, stat) {
