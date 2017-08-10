@@ -96,16 +96,31 @@ app.get('/scrape', function(req, res){
             // Next, we'll utilize the cheerio library on the returned html which will essentially give us jQuery functionality
 
             let $ = cheerio.load(html);
-            process($);
+            process();
+            extract($);
 
         }
     })
 });
 
-function process($){
-    let count  = 0;
-    let scrapes = {};
-    // Finally, we'll define the variables we're going to capture
+function process(){
+    let links_ = [];
+
+        for (var i = 1; i <= 62; i++) {
+            url = 'http://www.nairaland.com/2222332/nairaland-farmers-contact-details/'+i;
+            request(url, function(error, response, html){
+                if(!error){
+                    let $ = cheerio.load(html);
+                    extract($);
+
+                }
+            })
+        }
+    console.log(links_);
+
+}
+
+function extract($){
     $('td.l.w.pd').each(function() {
         let message = $('div.narrow', this).html();
 
@@ -122,7 +137,6 @@ function process($){
         callBack(scrape)
     });
 }
-
 function callBack(scrape) {
     let toCsv = {
         data: scrape,
